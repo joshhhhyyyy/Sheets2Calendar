@@ -1,5 +1,5 @@
-const calendarId = "Go to google calendar, create a new calendar or use an existing one, go to its settings and copy the link in Integrate Calendar";
-const dataRange = "A2:H176";
+const calendarId = "9ed72310904bfc77b97ab2855b59218d56b93deefb159870c20212dd3d693858@group.calendar.google.com";
+const dataRange = "A2:I176";
 var lineBreak = "\r\n";
 var PlaceholderFutureDate = new Date("2025"); // Lmao there is no method to get everything after x
 
@@ -22,13 +22,20 @@ function deleteAutoCreatedEvents(StartDate) {
     }
 }
 
-function parseTimeslot(period,hour) {
+function parseTimeslot(rawinput) {
+    let [rawtime, period] = rawinput.split(/(AM|PM)/i);
+    let [hour, minutes] = rawtime.trim().split(":").map(Number);
+    
+    if (minutes == null){
+      minutes = 0
+    }
+    
     if (period.toUpperCase() === "PM" && Number(hour) !== 12) {
       hour = Number(hour) + 12;
     } else if (period.toUpperCase() === "AM" && Number(hour) === 12) {
       hour = 0;
     }
-    return hour
+    return [hour,minutes]
 }
 
 
@@ -50,10 +57,12 @@ function addEventsToCalendar(StartDate = new Date()) {
 
         if (timeslot !== 'OFF' && date > StartDate) {
             var times = timeslot.split(" - ");
-            let [startTime, startTimePeriod] = times[0].split(/(AM|PM)/i);
-            let [endTime, endTimePeriod] = times[1].split(/(AM|PM)/i);
-            var startDateTime = new Date(date.setHours(parseTimeslot(startTimePeriod,startTime)));
-            var endDateTime = new Date(date.setHours(parseTimeslot(endTimePeriod,endTime)))
+            
+            let [startHour, startMinute] = parseTimeslot(times[0])
+            let [endHour, endMinute] = parseTimeslot(times[1])
+            
+            var startDateTime = new Date(date.setHours(startHour,startMinute));
+            var endDateTime = new Date(date.setHours(endHour,endMinute))
             
             CalendarApp.getCalendarById(calendarId).createEvent(`work @ ${worklocation}`,
                 startDateTime,endDateTime,
